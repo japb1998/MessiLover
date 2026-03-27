@@ -16,7 +16,8 @@
   <!-- Preloader -->
   <div id="preloader">
     <div class="loader">
-      <div class="loader-ball"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
       <span class="loader-text">10</span>
     </div>
   </div>
@@ -42,6 +43,9 @@
       </ul>
     </div>
   </nav>
+
+  <!-- Mobile Nav Overlay -->
+  <div class="nav-overlay" id="navOverlay"></div>
 
   <!-- Hero Section -->
   <section id="hero" class="hero">
@@ -71,17 +75,26 @@
             <span class="hero-stat-label">Career Goals</span>
           </div>
         </div>
-        <a href="#about" class="hero-cta fade-in" style="--delay: 1s">Explore His Legacy</a>
+        <a href="#about" class="hero-cta fade-in" style="--delay: 1s">
+          <span>Explore His Legacy</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
       </div>
       <div class="hero-image-container fade-in" style="--delay: 0.5s">
         <div class="hero-image-glow"></div>
         <div class="hero-jersey">
+          <div class="jersey-collar"></div>
+          <div class="jersey-stripe jersey-stripe-1"></div>
+          <div class="jersey-stripe jersey-stripe-2"></div>
+          <div class="jersey-name">MESSI</div>
           <div class="jersey-number">10</div>
+          <div class="jersey-badge">&#9734;</div>
         </div>
       </div>
     </div>
     <div class="scroll-indicator fade-in" style="--delay: 1.2s">
-      <div class="scroll-arrow"></div>
+      <span class="scroll-text">Scroll</span>
+      <div class="scroll-line"></div>
     </div>
   </section>
 
@@ -97,7 +110,7 @@
         <div class="about-card about-bio reveal">
           <div class="about-card-accent"></div>
           <h3>The Boy from Rosario</h3>
-          <p>Born on June 24, 1987, in Rosario, Argentina, Lionel Andr&eacute;s Messi defied all odds to become the greatest footballer the world has ever seen. Diagnosed with a growth hormone deficiency at age 10, FC Barcelona offered to pay for his treatment - a decision that would change football forever.</p>
+          <p>Born on June 24, 1987, in Rosario, Argentina, Lionel Andr&eacute;s Messi defied all odds to become the greatest footballer the world has ever seen. Diagnosed with a growth hormone deficiency at age 10, FC Barcelona offered to pay for his treatment &mdash; a decision that would change football forever.</p>
           <p>From the moment he stepped onto the Camp Nou pitch, it was clear the world was witnessing something extraordinary. With supernatural ball control, vision that borders on clairvoyance, and a left foot blessed by the gods, Messi has rewritten every record in the beautiful game.</p>
         </div>
         <div class="about-info reveal" style="--delay: 0.2s">
@@ -143,12 +156,12 @@
             </div>
             <div class="info-content">
               <span class="info-label">National Team</span>
-              <span class="info-value">Argentina</span>
+              <span class="info-value">Argentina &#127462;&#127479;</span>
             </div>
           </div>
           <div class="info-card">
             <div class="info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-5"/></svg>
             </div>
             <div class="info-content">
               <span class="info-label">Position</span>
@@ -170,8 +183,7 @@
         <div class="section-line"></div>
       </div>
 
-      <!-- Stats Filter -->
-      <div class="stats-filter">
+      <div class="stats-filter" id="statsFilter">
         <button class="filter-btn active" data-filter="all">All Career</button>
         <button class="filter-btn" data-filter="barcelona">FC Barcelona</button>
         <button class="filter-btn" data-filter="psg">PSG</button>
@@ -179,12 +191,8 @@
         <button class="filter-btn" data-filter="argentina">Argentina</button>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="stats-grid" id="statsGrid">
-        <!-- Populated by JS -->
-      </div>
+      <div class="stats-grid" id="statsGrid"></div>
 
-      <!-- Season-by-Season Chart -->
       <div class="stats-chart-container reveal">
         <h3 class="chart-title">Goals Per Season</h3>
         <div class="chart-wrapper">
@@ -206,9 +214,7 @@
         <h2 class="section-title">Greatest Moments</h2>
         <div class="section-line"></div>
       </div>
-      <div class="moments-grid" id="momentsGrid">
-        <!-- Populated by JS -->
-      </div>
+      <div class="moments-grid" id="momentsGrid"></div>
     </div>
   </section>
 
@@ -220,9 +226,7 @@
         <h2 class="section-title">Career Timeline</h2>
         <div class="section-line"></div>
       </div>
-      <div class="timeline" id="timeline">
-        <!-- Populated by JS -->
-      </div>
+      <div class="timeline" id="timeline"></div>
     </div>
   </section>
 
@@ -234,9 +238,7 @@
         <h2 class="section-title">Trophy Room</h2>
         <div class="section-line"></div>
       </div>
-      <div class="trophies-showcase" id="trophiesShowcase">
-        <!-- Populated by JS -->
-      </div>
+      <div class="trophies-showcase" id="trophiesShowcase"></div>
     </div>
   </section>
 
@@ -249,9 +251,7 @@
         <h2 class="section-title">Iconic Quotes</h2>
         <div class="section-line"></div>
       </div>
-      <div class="quotes-carousel" id="quotesCarousel">
-        <!-- Populated by JS -->
-      </div>
+      <div class="quotes-carousel" id="quotesCarousel"></div>
       <div class="quotes-nav">
         <button class="quote-nav-btn" id="quotePrev" aria-label="Previous quote">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -264,7 +264,7 @@
     </div>
   </section>
 
-  <!-- Comparison Section -->
+  <!-- Records Section -->
   <section id="comparison" class="section comparison">
     <div class="container">
       <div class="section-header">
@@ -272,9 +272,7 @@
         <h2 class="section-title">Records &amp; Milestones</h2>
         <div class="section-line"></div>
       </div>
-      <div class="records-grid" id="recordsGrid">
-        <!-- Populated by JS -->
-      </div>
+      <div class="records-grid" id="recordsGrid"></div>
     </div>
   </section>
 
@@ -284,7 +282,7 @@
       <div class="footer-content">
         <div class="footer-brand">
           <span class="footer-logo">10</span>
-          <p class="footer-tagline">D10S - The God of Football</p>
+          <p class="footer-tagline">D10S &mdash; The God of Football</p>
         </div>
         <div class="footer-links">
           <a href="#hero">Home</a>

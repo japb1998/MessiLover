@@ -1,34 +1,31 @@
 /**
  * Messi Website - Main Application
- * Handles all UI interactions, rendering, and animations
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize stats updater then build the page
-  StatsUpdater.init().then(() => {
-    initApp();
-  });
+  StatsUpdater.init().then(() => initApp());
 });
 
 function initApp() {
   hidePreloader();
   initNavbar();
   initParticles();
+  initStatsFilter();
   renderStats("all");
   renderGoalsChart();
   renderMoments();
   renderTimeline();
   renderTrophies();
-  renderQuotes();
+  initQuotes();
   renderRecords();
   initScrollAnimations();
   initCountUp();
   updateLastUpdated();
   StatsUpdater.startPeriodicUpdates();
 
-  // Listen for live stat updates
   window.addEventListener("messi-stats-updated", () => {
-    renderStats(document.querySelector(".filter-btn.active")?.dataset.filter || "all");
+    const active = document.querySelector(".filter-btn.active");
+    renderStats(active ? active.dataset.filter : "all");
     renderGoalsChart();
     updateLastUpdated();
   });
@@ -38,7 +35,7 @@ function initApp() {
 function hidePreloader() {
   setTimeout(() => {
     document.getElementById("preloader").classList.add("hidden");
-  }, 1500);
+  }, 1200);
 }
 
 // ===== NAVBAR =====
@@ -46,7 +43,13 @@ function initNavbar() {
   const navbar = document.getElementById("navbar");
   const toggle = document.getElementById("navToggle");
   const links = document.getElementById("navLinks");
-  const navAnchors = links.querySelectorAll("a");
+  const overlay = document.getElementById("navOverlay");
+
+  function closeMenu() {
+    toggle.classList.remove("active");
+    links.classList.remove("open");
+    overlay.classList.remove("open");
+  }
 
   window.addEventListener("scroll", () => {
     navbar.classList.toggle("scrolled", window.scrollY > 50);
@@ -54,15 +57,20 @@ function initNavbar() {
   });
 
   toggle.addEventListener("click", () => {
-    toggle.classList.toggle("active");
-    links.classList.toggle("open");
+    const isOpen = links.classList.contains("open");
+    if (isOpen) {
+      closeMenu();
+    } else {
+      toggle.classList.add("active");
+      links.classList.add("open");
+      overlay.classList.add("open");
+    }
   });
 
-  navAnchors.forEach((a) => {
-    a.addEventListener("click", () => {
-      toggle.classList.remove("active");
-      links.classList.remove("open");
-    });
+  overlay.addEventListener("click", closeMenu);
+
+  links.querySelectorAll("a").forEach((a) => {
+    a.addEventListener("click", closeMenu);
   });
 }
 
@@ -88,23 +96,33 @@ function updateActiveNavLink() {
 // ===== PARTICLES =====
 function initParticles() {
   const container = document.getElementById("heroParticles");
-  const count = 30;
-
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 25; i++) {
     const particle = document.createElement("div");
     particle.className = "particle";
     particle.style.left = Math.random() * 100 + "%";
-    particle.style.animationDuration = 8 + Math.random() * 12 + "s";
-    particle.style.animationDelay = Math.random() * 10 + "s";
+    particle.style.animationDuration = 10 + Math.random() * 15 + "s";
+    particle.style.animationDelay = Math.random() * 12 + "s";
     container.appendChild(particle);
   }
 }
 
-// ===== STATS =====
+// ===== STATS FILTER (bound ONCE) =====
+function initStatsFilter() {
+  const filterContainer = document.getElementById("statsFilter");
+  filterContainer.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+
+    filterContainer.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderStats(btn.dataset.filter);
+  });
+}
+
+// ===== STATS RENDERING =====
 function renderStats(filter) {
   const grid = document.getElementById("statsGrid");
   const data = MESSI_DATA.stats[filter];
-
   if (!data) return;
 
   const statItems = [
@@ -121,39 +139,26 @@ function renderStats(filter) {
   grid.innerHTML = statItems
     .map(
       (item, i) => `
-    <div class="stat-card" style="transition-delay: ${i * 0.05}s">
+    <div class="stat-card" style="transition-delay: ${i * 0.06}s">
       <span class="stat-number">${formatNumber(data[item.key])}</span>
       <span class="stat-label">${item.label}</span>
-    </div>
-  `
+    </div>`
     )
     .join("");
 
-  // Animate in
+  // Trigger animation on next frame
   requestAnimationFrame(() => {
-    grid.querySelectorAll(".stat-card").forEach((card) => {
-      card.classList.add("animate-in");
-    });
-  });
-
-  // Setup filter buttons
-  document.querySelectorAll(".filter-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
-      e.target.classList.add("active");
-      renderStats(e.target.dataset.filter);
+    requestAnimationFrame(() => {
+      grid.querySelectorAll(".stat-card").forEach((card) => card.classList.add("animate-in"));
     });
   });
 }
 
 function formatNumber(num) {
-  if (num >= 10000) {
-    return num.toLocaleString();
-  }
-  return num.toString();
+  return num >= 10000 ? num.toLocaleString() : num.toString();
 }
 
-// ===== GOALS CHART (Canvas-based) =====
+// ===== GOALS CHART =====
 function renderGoalsChart() {
   const canvas = document.getElementById("goalsChart");
   if (!canvas) return;
@@ -162,7 +167,6 @@ function renderGoalsChart() {
   const data = MESSI_DATA.goalsBySeason;
   const maxGoals = Math.max(...data.map((d) => d.goals));
 
-  // Set canvas size
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width * dpr;
@@ -173,31 +177,28 @@ function renderGoalsChart() {
 
   const width = rect.width;
   const height = rect.height;
-  const padding = { top: 20, right: 20, bottom: 50, left: 50 };
+  const padding = { top: 24, right: 20, bottom: 50, left: 45 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
-  const barWidth = Math.max(8, (chartW / data.length) * 0.6);
   const gap = chartW / data.length;
+  const barWidth = Math.max(6, gap * 0.55);
 
-  // Clear
   ctx.clearRect(0, 0, width, height);
 
   // Grid lines
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-  ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padding.top + (chartH / 4) * i;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
 
-    // Y-axis labels
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.font = "11px Inter, sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.font = "10px Inter, sans-serif";
     ctx.textAlign = "right";
-    const val = Math.round(maxGoals - (maxGoals / 4) * i);
-    ctx.fillText(val.toString(), padding.left - 10, y + 4);
+    ctx.fillText(Math.round(maxGoals - (maxGoals / 4) * i).toString(), padding.left - 8, y + 4);
   }
 
   // Bars
@@ -206,78 +207,64 @@ function renderGoalsChart() {
     const barH = (d.goals / maxGoals) * chartH;
     const y = padding.top + chartH - barH;
 
-    // Gradient bar
     const grad = ctx.createLinearGradient(x, y, x, padding.top + chartH);
     if (d.goals >= 70) {
       grad.addColorStop(0, "#f5c518");
-      grad.addColorStop(1, "#f0a500");
+      grad.addColorStop(1, "rgba(245, 197, 24, 0.3)");
     } else if (d.goals >= 50) {
       grad.addColorStop(0, "#e94560");
-      grad.addColorStop(1, "#c92a45");
+      grad.addColorStop(1, "rgba(233, 69, 96, 0.3)");
     } else {
       grad.addColorStop(0, "#75aadb");
-      grad.addColorStop(1, "#5a8fc0");
+      grad.addColorStop(1, "rgba(117, 170, 219, 0.3)");
     }
 
     ctx.fillStyle = grad;
+    const r = Math.min(3, barWidth / 2);
     ctx.beginPath();
-    const radius = Math.min(4, barWidth / 2);
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + barWidth - radius, y);
-    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + barWidth - r, y);
+    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + r);
     ctx.lineTo(x + barWidth, padding.top + chartH);
     ctx.lineTo(x, padding.top + chartH);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.fill();
 
-    // Goal count on top
-    if (barH > 20) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.font = "bold 10px Inter, sans-serif";
+    // Goal count
+    if (barH > 25) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.font = "bold 9px Inter, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(d.goals.toString(), x + barWidth / 2, y - 6);
+      ctx.fillText(d.goals.toString(), x + barWidth / 2, y - 5);
     }
 
-    // X-axis labels
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.font = "10px Inter, sans-serif";
+    // X labels
+    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.font = "9px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.save();
-    ctx.translate(x + barWidth / 2, padding.top + chartH + 16);
+    ctx.translate(x + barWidth / 2, padding.top + chartH + 14);
     ctx.rotate(-Math.PI / 4);
     ctx.fillText(d.season, 0, 0);
     ctx.restore();
   });
-
-  // Highlight the 91-goal bar (2011/12)
-  const peakIndex = data.findIndex((d) => d.goals === 73);
-  if (peakIndex >= 0) {
-    const x = padding.left + peakIndex * gap + (gap - barWidth) / 2;
-    ctx.fillStyle = "rgba(245, 197, 24, 0.8)";
-    ctx.font = "bold 11px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("\u2605 Record Season", x + barWidth / 2, padding.top - 2);
-  }
 }
 
-// Redraw chart on resize
 let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => renderGoalsChart(), 200);
+  resizeTimer = setTimeout(renderGoalsChart, 200);
 });
 
 // ===== MOMENTS =====
 function renderMoments() {
   const grid = document.getElementById("momentsGrid");
-  const moments = MESSI_DATA.moments;
-
-  grid.innerHTML = moments
+  grid.innerHTML = MESSI_DATA.moments
     .map(
-      (m) => `
-    <div class="moment-card reveal">
-      <div class="moment-visual">
+      (m, i) => `
+    <div class="moment-card${i === 0 ? " featured" : ""}">
+      <div class="moment-visual" style="background: ${m.gradient}">
         <div class="moment-emoji">${m.emoji}</div>
         <span class="moment-year-badge">${m.year}</span>
       </div>
@@ -285,8 +272,7 @@ function renderMoments() {
         <h3 class="moment-title">${m.title}</h3>
         <p class="moment-desc">${m.description}</p>
       </div>
-    </div>
-  `
+    </div>`
     )
     .join("");
 }
@@ -294,19 +280,17 @@ function renderMoments() {
 // ===== TIMELINE =====
 function renderTimeline() {
   const container = document.getElementById("timeline");
-
   container.innerHTML = MESSI_DATA.timeline
     .map(
       (item) => `
     <div class="timeline-item">
-      <div class="timeline-dot"></div>
+      <div class="timeline-dot">${item.icon}</div>
       <div class="timeline-content">
         <span class="timeline-year">${item.year}</span>
         <h3 class="timeline-title">${item.title}</h3>
         <p class="timeline-text">${item.text}</p>
       </div>
-    </div>
-  `
+    </div>`
     )
     .join("");
 }
@@ -314,25 +298,24 @@ function renderTimeline() {
 // ===== TROPHIES =====
 function renderTrophies() {
   const showcase = document.getElementById("trophiesShowcase");
-
   showcase.innerHTML = MESSI_DATA.trophies
     .map(
       (t, i) => `
-    <div class="trophy-card" style="--delay: ${i * 0.05}s">
+    <div class="trophy-card" style="--delay: ${i * 0.04}s">
       <span class="trophy-icon">${t.icon}</span>
       <h4 class="trophy-name">${t.name}</h4>
       <span class="trophy-count">${t.count}x</span>
       <p class="trophy-years">${t.years}</p>
-    </div>
-  `
+    </div>`
     )
     .join("");
 }
 
 // ===== QUOTES =====
 let currentQuote = 0;
+let quoteInterval = null;
 
-function renderQuotes() {
+function initQuotes() {
   const carousel = document.getElementById("quotesCarousel");
   const dotsContainer = document.getElementById("quotesDots");
   const quotes = MESSI_DATA.quotes;
@@ -340,73 +323,75 @@ function renderQuotes() {
   carousel.innerHTML = quotes
     .map(
       (q, i) => `
-    <div class="quote-slide ${i === 0 ? "active" : ""}">
+    <div class="quote-slide${i === 0 ? " active" : ""}">
       <span class="quote-mark">\u201C</span>
       <p class="quote-text">${q.text}</p>
       <span class="quote-author">\u2014 ${q.author}</span>
-    </div>
-  `
+    </div>`
     )
     .join("");
 
   dotsContainer.innerHTML = quotes
-    .map(
-      (_, i) => `
-    <div class="quote-dot ${i === 0 ? "active" : ""}" data-index="${i}"></div>
-  `
-    )
+    .map((_, i) => `<div class="quote-dot${i === 0 ? " active" : ""}" data-index="${i}"></div>`)
     .join("");
 
-  // Navigation
   document.getElementById("quoteNext").addEventListener("click", () => {
     goToQuote((currentQuote + 1) % quotes.length);
+    resetAutoAdvance();
   });
 
   document.getElementById("quotePrev").addEventListener("click", () => {
     goToQuote((currentQuote - 1 + quotes.length) % quotes.length);
+    resetAutoAdvance();
   });
 
-  dotsContainer.querySelectorAll(".quote-dot").forEach((dot) => {
-    dot.addEventListener("click", (e) => {
-      goToQuote(parseInt(e.target.dataset.index));
-    });
+  dotsContainer.addEventListener("click", (e) => {
+    const dot = e.target.closest(".quote-dot");
+    if (!dot) return;
+    goToQuote(parseInt(dot.dataset.index));
+    resetAutoAdvance();
   });
 
-  // Auto-advance
-  setInterval(() => {
-    goToQuote((currentQuote + 1) % quotes.length);
-  }, 6000);
+  startAutoAdvance();
 }
 
 function goToQuote(index) {
   const slides = document.querySelectorAll(".quote-slide");
   const dots = document.querySelectorAll(".quote-dot");
+  if (!slides.length) return;
 
   slides[currentQuote].classList.remove("active");
   dots[currentQuote].classList.remove("active");
-
   currentQuote = index;
-
   slides[currentQuote].classList.add("active");
   dots[currentQuote].classList.add("active");
+}
+
+function startAutoAdvance() {
+  quoteInterval = setInterval(() => {
+    goToQuote((currentQuote + 1) % MESSI_DATA.quotes.length);
+  }, 6000);
+}
+
+function resetAutoAdvance() {
+  clearInterval(quoteInterval);
+  startAutoAdvance();
 }
 
 // ===== RECORDS =====
 function renderRecords() {
   const grid = document.getElementById("recordsGrid");
-
   grid.innerHTML = MESSI_DATA.records
     .map(
       (r, i) => `
-    <div class="record-card" style="--delay: ${i * 0.05}s">
+    <div class="record-card" style="--delay: ${i * 0.04}s">
       <span class="record-icon">${r.icon}</span>
       <div class="record-info">
         <h4>${r.title}</h4>
         <span class="record-value">${r.value}</span>
         <p class="record-desc">${r.desc}</p>
       </div>
-    </div>
-  `
+    </div>`
     )
     .join("");
 }
@@ -418,34 +403,25 @@ function initScrollAnimations() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("revealed");
-          // Don't unobserve - keep for re-triggering if needed
         }
       });
     },
-    {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    }
+    { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
   );
 
-  // Observe all animatable elements
   document
-    .querySelectorAll(
-      ".reveal, .timeline-item, .trophy-card, .moment-card, .record-card, .stat-card"
-    )
+    .querySelectorAll(".reveal, .timeline-item, .trophy-card, .moment-card, .record-card")
     .forEach((el) => observer.observe(el));
 }
 
-// ===== COUNT UP ANIMATION =====
+// ===== COUNT UP =====
 function initCountUp() {
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const el = entry.target;
-          const target = parseInt(el.dataset.target);
-          const suffix = el.dataset.suffix || "";
-          animateNumber(el, target, suffix);
+          animateNumber(el, parseInt(el.dataset.target), el.dataset.suffix || "");
           observer.unobserve(el);
         }
       });
@@ -461,16 +437,10 @@ function animateNumber(el, target, suffix) {
   const start = performance.now();
 
   function update(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
+    const progress = Math.min((now - start) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(eased * target);
-    el.textContent = current + suffix;
-
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    }
+    el.textContent = Math.round(eased * target) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
   }
 
   requestAnimationFrame(update);
